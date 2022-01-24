@@ -141,7 +141,13 @@ static void flight (bool go)
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+    if (go){
+        sh->fSt.st.pilotStat=FLYING;
+    } else {
+        sh->fSt.st.pilotStat=FLYING_BACK;
+    }
+    saveState(nFic, &sh->fSt);
 
     if (semUp (semgid, sh->mutex) == -1) {                                                      /* exit critical region */
         perror ("error on the up operation for semaphore access (PT)");
@@ -166,14 +172,22 @@ static void signalReadyForBoarding ()
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+    sh->fSt.st.pilotStat=READY_FOR_BOARDING;
+    sh->fSt.nFlight++;
+    saveState(nFic, &sh->fSt);
+    saveStartBoarding(nFic, &sh->fSt);
 
     if (semUp (semgid, sh->mutex) == -1) {                                                      /* exit critical region */
-        perror ("error on the up operation for semaphore access (PT)");
+        perror ("error on the up operation for semaphore ore access (PT)");
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+    if (semUp (semgid, sh->readyForBoarding) == -1) {                                                      /* exit critical region */
+        perror ("error on the up operation for semaphore ore access (PT)");
+        exit (EXIT_FAILURE);
+    }
 
 }
 
@@ -191,14 +205,20 @@ static void waitUntilReadyToFlight ()
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+    sh->fSt.st.pilotStat=WAITING_FOR_BOARDING;
+    saveState(nFic, &sh->fSt);
 
     if (semUp (semgid, sh->mutex) == -1) {                                                      /* exit critical region */
         perror ("error on the up operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+     if (semDown (semgid, sh->readyToFlight) == -1) {                                                      /* enter critical region */
+        perror ("error on the down operation for semaphore access (PT)");
+        exit (EXIT_FAILURE);
+    }
 }
 
 /**
@@ -216,21 +236,38 @@ static void dropPassengersAtTarget ()
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+    saveFlightArrived(nFic, &sh->fSt);
+    sh->fSt.st.pilotStat=DROPING_PASSENGERS;
+    saveState(nFic, &sh->fSt);
+    int nPinf = sh->fSt.nPassInFlight;
+    while(nPinf > 0) {
+        if (semUp (semgid, sh->passengersWaitInFlight) == -1)  {                                                   /* exit critical region */
+            perror ("error on the up operation for semaphore access (PT)");
+            exit (EXIT_FAILURE);
+        }
+        nPinf--;
+    }
 
     if (semUp (semgid, sh->mutex) == -1)  {                                                   /* exit critical region */
         perror ("error on the up operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+
+    if (semDown (semgid, sh->planeEmpty) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (PT)");
+        exit (EXIT_FAILURE);
+    }
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
         perror ("error on the down operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }
 
-    /* insert your code here */
+    /*DONE insert your code here */
+    saveFlightReturning(nFic, &sh->fSt);
 
     if (semUp (semgid, sh->mutex) == -1)  {                                                   /* exit critical region */
         perror ("error on the up operation for semaphore access (PT)");
