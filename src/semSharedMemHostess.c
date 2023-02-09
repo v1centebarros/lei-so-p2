@@ -304,7 +304,7 @@ void  signalReadyToFlight()
     saveState(nFic,&sh->fSt);
     int i = 0 , count = 0;
     
-    while (sh->fSt.nPassengersInFlight[i] > i) {
+    while (sh->fSt.nPassengersInFlight[i] > 0) {
         count+= sh->fSt.nPassengersInFlight[i];
         i++;
     }
